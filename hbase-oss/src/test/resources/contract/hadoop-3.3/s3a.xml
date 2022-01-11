@@ -35,6 +35,11 @@
   -->
 
   <property>
+    <name>fs.hboss.classname</name>
+    <value>org.apache.hadoop.hbase.oss.hadoop33.HBase33ObjectStoreSemantics</value>
+  </property>
+
+  <property>
     <name>fs.contract.test.root-tests-enabled</name>
     <value>true</value>
   </property>

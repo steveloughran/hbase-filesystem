@@ -34,4 +34,15 @@ public class Constants  {
   public static final String CONTRACT_TEST_SCHEME = "fs.contract.test.fs.scheme";
 
   public static final String WAIT_INTERVAL_WARN = "fs.hboss.lock-wait.interval.warning";
+
+  /**
+   * class to use for HBoss in tests; will be
+   * the default value unless the contract XML
+   * switches to the hadoop 3.3 version
+   */
+  public static final String HBOSS_CLASSNAME =
+      "fs.hboss.classname";
+
+  public static final String HBOSS_CLASSNAME_DEFAULT =
+      "org.apache.hadoop.hbase.oss.HBaseObjectStoreSemantics";
 }
