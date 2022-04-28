@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hbase.oss.hadoop33;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -32,13 +33,16 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * test the createFile() builder API, where the existence checks
- * take place in build()
+ * take place in build(), not the FS API call.
+ * This means the lock checking needs to be postponed.
  */
-public class TestCreateFile extends HBaseObjectStoreSemanticsTest {
+public class TestCreateFileBuilder extends HBaseObjectStoreSemanticsTest {
 
   @Test
   public void testCreateOverlappingBuilders() throws Exception {
     Path serialPath = testPath("testCreateNonRecursiveSerial");
+
+    FSDataOutputStream out = null;
     try {
       FSDataOutputStreamBuilder builder1 = hboss.createFile(serialPath)
           .overwrite(false);
@@ -47,17 +51,21 @@ public class TestCreateFile extends HBaseObjectStoreSemanticsTest {
       // build the second of these.
       // even before the stream is closed, the first builder's build
       // call must fail.
-      FSDataOutputStream out;
+
       out = builder2.build();
-      assertTrue("Not a LockedFSDataOutputStream: " + out,
-          out instanceof AutoLock.LockedFSDataOutputStream);
+      Assertions.assertThat(out)
+          .describedAs("expected a LockedFSDataOutputStream")
+          .isInstanceOf(AutoLock.LockedFSDataOutputStream.class);
 
       out.write(0);
 
       intercept(FileAlreadyExistsException.class, () ->
           builder1.build());
     } finally {
-      hboss.delete(serialPath);
+      if (out != null) {
+        out.close();
+      }
+      hboss.delete(serialPath, false);
     }
   }
 

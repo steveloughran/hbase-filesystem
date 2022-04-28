@@ -19,23 +19,20 @@
 package org.apache.hadoop.hbase.oss.hadoop33;
 
 import java.io.IOException;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 import javax.annotation.Nonnull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FSDataOutputStreamBuilder;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FutureDataInputStreamBuilder;
+import org.apache.hadoop.fs.Options;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.oss.HBaseObjectStoreSemantics;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hbase.oss.sync.AutoLock;
 import org.apache.hadoop.hbase.oss.sync.TreeLockManager;
+import org.apache.hadoop.util.Progressable;
 
 /**
  * An output stream builder for createFile().
@@ -71,6 +68,55 @@ public class LockedCreateFileBuilder
       lock.close();
       throw e;
     }
+  }
+
+  @Override
+  public LockedCreateFileBuilder overwrite(final boolean overwrite) {
+    wrapped.overwrite(overwrite);
+    return getThisBuilder();
+  }
+
+  @Override
+  public LockedCreateFileBuilder permission(@Nonnull final FsPermission perm) {
+    wrapped.permission(perm);
+    return getThisBuilder();
+  }
+
+  @Override
+  public LockedCreateFileBuilder bufferSize(final int bufSize) {
+    wrapped.bufferSize(bufSize);
+    return getThisBuilder();
+  }
+
+  @Override
+  public LockedCreateFileBuilder replication(final short replica) {
+    wrapped.replication(replica);
+    return getThisBuilder();
+  }
+
+
+  @Override
+  public LockedCreateFileBuilder blockSize(final long blkSize) {
+    wrapped.blockSize(blkSize);
+    return getThisBuilder();
+  }
+
+  @Override
+  public LockedCreateFileBuilder recursive() {
+    wrapped.recursive();
+    return getThisBuilder();
+  }
+
+  @Override
+  public LockedCreateFileBuilder progress(@Nonnull final Progressable prog) {
+    wrapped.progress(prog);
+    return getThisBuilder();
+  }
+
+  @Override
+  public LockedCreateFileBuilder checksumOpt(@Nonnull final Options.ChecksumOpt chksumOpt) {
+    wrapped.checksumOpt(chksumOpt);
+    return getThisBuilder();
   }
 
   @Override
@@ -156,26 +202,24 @@ public class LockedCreateFileBuilder
 
   /**
    * Configure with a long value.
-   * getThisBuilder() is not on the original interface.
+   *  was not on the original interface.
    * It is implemented in the wrapper by converting
    * to a string and calling the wrapper's
    * {@code #opt(String, String)}.
    */
   public LockedCreateFileBuilder opt(@Nonnull String key, long value) {
-    wrapped.opt(key, Long.toString(value));
-    return getThisBuilder();
+    return opt(key, Long.toString(value));
   }
 
   /**
    * Configure with a long value.
-   * This is not on the original interface.
+   * must(String, Long) was not on the original interface.
    * It is implemented in the wrapper by converting
    * to a string and calling the wrapper's
    * {@code #must(String, String)}.
    */
   public LockedCreateFileBuilder must(@Nonnull String key, long value) {
-    wrapped.must(key, Long.toString(value));
-    return getThisBuilder();
+    return must(key, Long.toString(value));
   }
 
 }

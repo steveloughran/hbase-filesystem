@@ -29,6 +29,8 @@ import org.apache.hadoop.fs.impl.AbstractFSBuilderImpl;
 import org.apache.hadoop.hbase.oss.sync.AutoLock;
 import org.apache.hadoop.hbase.oss.sync.TreeLockManager;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * a builder which wraps another FSBuilder and locks the
  * final build operation.
@@ -38,32 +40,61 @@ import org.apache.hadoop.hbase.oss.sync.TreeLockManager;
  * @param <S> type of built item
  * @param <B> builder interface
  */
-public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>> extends
-    AbstractFSBuilderImpl<S, B> {
+public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>>
+    extends AbstractFSBuilderImpl<S, B> {
+  /**
+   * Target path.
+   */
   private final Path path;
-  private final TreeLockManager sync;
-  private final B wrapped;
-  private final Function<S, S> transform;
 
+  /**
+   * Lock.
+   */
+  private final TreeLockManager sync;
+
+  /**
+   * Wrapped builder.
+   */
+  private final B wrapped;
+
+  /**
+   * A function which is invoked on the output of the wrapped build,
+   * inside the lock operation.
+   */
+  private final Function<S, S> afterBuildTransform;
+
+  /**
+   * Constructor.
+   * @param path Target path.
+   * @param sync Lock.
+   * @param wrapped Wrapped builder.
+   * @param afterBuildTransform a function which is invoked on the output of the
+   * wrapped build, inside the lock operation.
+   *
+   */
   public LockingFSBuilderWrapper(@Nonnull final Path path,
       final TreeLockManager sync,
       final B wrapped,
-      final Function<S, S> transform) {
+      final Function<S, S> afterBuildTransform) {
     super(path);
-    this.sync = sync;
-    this.path = path;
-    this.wrapped = wrapped;
-    this.transform = transform;
+    this.sync = requireNonNull(sync);
+    this.path = requireNonNull(path);
+    this.wrapped = requireNonNull(wrapped);
+    this.afterBuildTransform = requireNonNull(afterBuildTransform);
   }
 
   @Override
   public S build() throws IllegalArgumentException, UnsupportedOperationException, IOException {
     try (AutoLock l = sync.lock(path)) {
-      return transform.apply(wrapped.build());
+      return afterBuildTransform.apply(wrapped.build());
     }
   }
 
-  public B getWrapped() {
+  /**
+   * Get the wrapped builder.
+   * @return wrapped builder.
+   */
+  protected B getWrapped() {
     return wrapped;
   }
 
@@ -145,26 +176,24 @@ public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>> extends
 
   /**
    * Configure with a long value.
-   * getThisBuilder() is not on the original interface.
+   * opt(String, Long) was not on the original interface..
    * It is implemented in the wrapper by converting
    * to a string and calling the wrapper's
    * {@code #opt(String, String)}.
    */
   public B opt(@Nonnull String key, long value) {
-    wrapped.opt(key, Long.toString(value));
-    return getThisBuilder();
+    return opt(key, Long.toString(value));
   }
 
   /**
    * Configure with a long value.
-   * This is not on the original interface.
+   * must(String, Long) was not on the original interface.
    * It is implemented in the wrapper by converting
    * to a string and calling the wrapper's
    * {@code #must(String, String)}.
    */
   public B must(@Nonnull String key, long value) {
-    wrapped.must(key, Long.toString(value));
-    return getThisBuilder();
+    return must(key, Long.toString(value));
   }
 
 
