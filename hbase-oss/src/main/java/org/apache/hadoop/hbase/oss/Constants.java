@@ -45,4 +45,14 @@ public class Constants  {
 
   public static final String HBOSS_CLASSNAME_DEFAULT =
       "org.apache.hadoop.hbase.oss.HBaseObjectStoreSemantics";
+
+  public static final String HBOSS_HADOOP33_CLASSNAME =
+      "org.apache.hadoop.hbase.oss.hadoop33.HBase33ObjectStoreSemantics";
+
+  public static final String CAPABILITY_HBOSS =
+      "org.apache.hadoop.hbase.hboss";
+
+  public static final String CAPABILITY_HBOSS33 =
+      "org.apache.hadoop.hbase.hboss33";
+
 }

@@ -19,17 +19,34 @@
 package org.apache.hadoop.hbase.oss.hadoop33;
 
 import java.io.IOException;
+import java.net.URI;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStreamBuilder;
 import org.apache.hadoop.fs.FutureDataInputStreamBuilder;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathHandle;
+import org.apache.hadoop.fs.StreamCapabilities;
 import org.apache.hadoop.hbase.oss.HBaseObjectStoreSemantics;
+
+import static org.apache.hadoop.hbase.oss.Constants.CAPABILITY_HBOSS;
+import static org.apache.hadoop.hbase.oss.Constants.CAPABILITY_HBOSS33;
 
 /**
  * Add the hadoop-3.3+ builder methods.
  */
 public class HBase33ObjectStoreSemantics extends HBaseObjectStoreSemantics {
+  private static final Logger LOG =
+        LoggerFactory.getLogger(HBase33ObjectStoreSemantics.class);
+
+  @Override
+  public void initialize(final URI name, final Configuration conf) throws IOException {
+    super.initialize(name, conf);
+    LOG.info("Using HBase33ObjectStoreSemantics for hadoop 3.3 APIs");
+  }
 
   @Override
   public FutureDataInputStreamBuilder openFile(final Path path)
@@ -54,11 +71,18 @@ public class HBase33ObjectStoreSemantics extends HBaseObjectStoreSemantics {
   }
 
   @Override
-  public LockedCreateFileBuilder createFile(final Path path) {
+  public FSDataOutputStreamBuilder createFile(final Path path) {
     return new LockedCreateFileBuilder(this,
         path,
         getSync(),
         super.createFile(path));
   }
 
+  @Override
+  public boolean hasCapability(final String capability) {
+    if (CAPABILITY_HBOSS33.equals(capability)) {
+      return true;
+    }
+    return super.hasCapability(capability);
+  }
 }

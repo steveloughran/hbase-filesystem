@@ -20,16 +20,21 @@ package org.apache.hadoop.hbase.oss.hadoop33;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FSDataOutputStreamBuilder;
 import org.apache.hadoop.fs.FileAlreadyExistsException;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.oss.HBaseObjectStoreSemantics;
 import org.apache.hadoop.hbase.oss.HBaseObjectStoreSemanticsTest;
 import org.apache.hadoop.hbase.oss.sync.AutoLock;
 
+import static org.apache.hadoop.hbase.oss.Constants.HBOSS_CLASSNAME;
+import static org.apache.hadoop.hbase.oss.Constants.HBOSS_HADOOP33_CLASSNAME;
 import static org.apache.hadoop.test.LambdaTestUtils.intercept;
-import static org.junit.Assert.assertTrue;
 
 /**
  * test the createFile() builder API, where the existence checks
@@ -37,16 +42,27 @@ import static org.junit.Assert.assertTrue;
  * This means the lock checking needs to be postponed.
  */
 public class TestCreateFileBuilder extends HBaseObjectStoreSemanticsTest {
+  private static final Logger LOG =
+        LoggerFactory.getLogger(TestCreateFileBuilder.class);
+
+  @Override
+  protected Configuration createConfiguration() {
+    Configuration conf = super.createConfiguration();
+    conf.set(HBOSS_CLASSNAME, HBOSS_HADOOP33_CLASSNAME);
+    return conf;
+  }
+
+
 
   @Test
   public void testCreateOverlappingBuilders() throws Exception {
-    Path serialPath = testPath("testCreateNonRecursiveSerial");
+    Path path = testPath("testCreateOverlappingBuilders");
 
     FSDataOutputStream out = null;
     try {
-      FSDataOutputStreamBuilder builder1 = hboss.createFile(serialPath)
+      FSDataOutputStreamBuilder builder1 = hboss.createFile(path)
           .overwrite(false);
-      FSDataOutputStreamBuilder builder2 = hboss.createFile(serialPath)
+      FSDataOutputStreamBuilder builder2 = hboss.createFile(path)
           .overwrite(false);
       // build the second of these.
       // even before the stream is closed, the first builder's build
@@ -56,8 +72,9 @@ public class TestCreateFileBuilder extends HBaseObjectStoreSemanticsTest {
       Assertions.assertThat(out)
           .describedAs("expected a LockedFSDataOutputStream")
           .isInstanceOf(AutoLock.LockedFSDataOutputStream.class);
-
+      LOG.debug("building stream for  {}:", path);
       out.write(0);
+
 
       intercept(FileAlreadyExistsException.class, () ->
           builder1.build());
@@ -65,7 +82,7 @@ public class TestCreateFileBuilder extends HBaseObjectStoreSemanticsTest {
       if (out != null) {
         out.close();
       }
-      hboss.delete(serialPath, false);
+      hboss.delete(path, false);
     }
   }
 

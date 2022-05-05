@@ -44,6 +44,7 @@ import org.apache.hadoop.fs.ParentNotDirectoryException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.RemoteIterator;
+import org.apache.hadoop.fs.StreamCapabilities;
 import org.apache.hadoop.fs.UnsupportedFileSystemException;
 import org.apache.hadoop.fs.XAttrSetFlag;
 import org.apache.hadoop.fs.permission.AclEntry;
@@ -64,6 +65,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.yetus.audience.InterfaceStability;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.hadoop.hbase.oss.Constants.CAPABILITY_HBOSS;
 
 /**
  * A FileSystem implementation that layers locking logic on top of another,
@@ -95,7 +98,8 @@ import org.slf4j.LoggerFactory;
  */
 @InterfaceAudience.LimitedPrivate(HBaseInterfaceAudience.CONFIG)
 @InterfaceStability.Unstable
-public class HBaseObjectStoreSemantics extends FilterFileSystem {
+public class HBaseObjectStoreSemantics extends FilterFileSystem
+    implements StreamCapabilities {
   private static final Logger LOG =
         LoggerFactory.getLogger(HBaseObjectStoreSemantics.class);
 
@@ -926,5 +930,16 @@ public class HBaseObjectStoreSemantics extends FilterFileSystem {
     try (AutoLock l = sync.lock(path)) {
       fs.removeXAttr(path, name);
     }
+  }
+
+  @Override
+  public boolean hasCapability(final String capability) {
+    if (CAPABILITY_HBOSS.equals(capability)) {
+      return true;
+    }
+    if (fs instanceof StreamCapabilities) {
+      return ((StreamCapabilities) fs).hasCapability(capability);
+    }
+    return false;
   }
 }

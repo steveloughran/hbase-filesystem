@@ -23,6 +23,9 @@ import java.util.function.Function;
 
 import javax.annotation.Nonnull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.hadoop.fs.FSBuilder;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.impl.AbstractFSBuilderImpl;
@@ -42,6 +45,9 @@ import static java.util.Objects.requireNonNull;
  */
 public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>>
     extends AbstractFSBuilderImpl<S, B> {
+
+  private static final Logger LOG =
+        LoggerFactory.getLogger(LockingFSBuilderWrapper.class);
   /**
    * Target path.
    */
@@ -85,8 +91,11 @@ public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>>
 
   @Override
   public S build() throws IllegalArgumentException, UnsupportedOperationException, IOException {
+    LOG.debug("building stream for  {}:", path);
     try (AutoLock l = sync.lock(path)) {
-      return afterBuildTransform.apply(wrapped.build());
+      S result = afterBuildTransform.apply(wrapped.build());
+      LOG.debug("result is {}:", result);
+      return result;
     }
   }
 
@@ -101,30 +110,35 @@ public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>>
   @Override
   public B opt(@Nonnull final String key,
       @Nonnull final String value) {
+    LOG.debug("{}: option {}=\"{}\"", path, key, value);
     wrapped.opt(key, value);
     return getThisBuilder();
   }
 
   @Override
   public B opt(@Nonnull final String key, final boolean value) {
+    LOG.debug("{}: option {}=\"{}\"", path, key, value);
     wrapped.opt(key, value);
     return getThisBuilder();
   }
 
   @Override
   public B opt(@Nonnull final String key, final int value) {
+    LOG.debug("{}: option {}=\"{}\"", path, key, value);
     wrapped.opt(key, value);
     return getThisBuilder();
   }
 
   @Override
   public B opt(@Nonnull final String key, final float value) {
+    LOG.debug("{}: option {}=\"{}\"", path, key, value);
     wrapped.opt(key, value);
     return getThisBuilder();
   }
 
   @Override
   public B opt(@Nonnull final String key, final double value) {
+    LOG.debug("{}: option {}=\"{}\"", path, key, value);
     wrapped.opt(key, value);
     return getThisBuilder();
   }
@@ -132,6 +146,7 @@ public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>>
   @Override
   public B opt(@Nonnull final String key,
       @Nonnull final String... values) {
+    LOG.debug("{}: option {}=(values)", path, key);
     wrapped.opt(key, values);
     return getThisBuilder();
   }
@@ -145,24 +160,28 @@ public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>>
 
   @Override
   public B must(@Nonnull final String key, final boolean value) {
+    LOG.debug("{}: must {}=\"{}\"", path, key, value);
     wrapped.must(key, value);
     return getThisBuilder();
   }
 
   @Override
   public B must(@Nonnull final String key, final int value) {
+    LOG.debug("{}: must {}=\"{}\"", path, key, value);
     wrapped.must(key, value);
     return getThisBuilder();
   }
 
   @Override
   public B must(@Nonnull final String key, final float value) {
+    LOG.debug("{}: must {}=\"{}\"", path, key, value);
     wrapped.must(key, value);
     return getThisBuilder();
   }
 
   @Override
   public B must(@Nonnull final String key, final double value) {
+    LOG.debug("{}: must {}=\"{}\"", path, key, value);
     wrapped.must(key, value);
     return getThisBuilder();
   }
@@ -170,6 +189,7 @@ public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>>
   @Override
   public B must(@Nonnull final String key,
       @Nonnull final String... values) {
+    LOG.debug("{}: must {}=(values)", path, key);
     wrapped.must(key, values);
     return getThisBuilder();
   }
@@ -196,5 +216,11 @@ public class LockingFSBuilderWrapper<S, B extends FSBuilder<S, B>>
     return must(key, Long.toString(value));
   }
 
-
+  @Override
+  public String toString() {
+    return "LockingFSBuilderWrapper{" +
+        "path=" + path +
+        ", wrapped=" + wrapped +
+        "} " + super.toString();
+  }
 }
